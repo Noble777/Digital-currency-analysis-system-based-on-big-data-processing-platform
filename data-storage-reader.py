@@ -13,7 +13,21 @@ logger = logging.getLogger('data-storage-reader')
 logger.setLevel(logging.DEBUG)
 
 def shutdown_hook(producer, connection):
-
+    """
+    a shutdown hook to be called before the shutdown
+    """
+    try:
+        logger.info('Closing Kafka producer')
+        producer.flush(10)
+        producer.close()
+        logger.info('Kafka producer closed')
+        logger.info('Closing Hbase Connection')
+        connection.close()
+        logger.info('Hbase Connection closed')
+    except KafkaError as kafka_error:
+        logger.warn('Failed to close Kafka producer, caused by: %s', kafka_error.message)
+    finally:
+        logger.info('Existing program')
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
