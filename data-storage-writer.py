@@ -32,7 +32,7 @@ def shutdown_hook(kafka_consumer, hbase_connection):
 # BTC-USD     6000                     6100
 
 # row key - Symbol + timestamp
-#                             family:price family:symbol family:timestamp
+#                            family:price family:symbol family:timestamp
 # BTC-USD:timestamp1            6000
 # BTC-USD:timestamp2            6100
 # BTC-USD:timestamp3            6200
