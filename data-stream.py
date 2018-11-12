@@ -20,6 +20,18 @@ def shutdown_hook(producer):
     """
     a shutdown hook to be called before the shutdown
     """
+    try:
+        logger.info('Flushing pending messages to kafka, timeout is set to 10s')
+        producer.flush(10)
+        logger.info('Finish flushing pending messages to kafka')
+    except KafkaError as kafka_error:
+        logger.warn('Failed to flush pending messages to kafka, caused by: %s', kafka_error.message)
+    finally:
+        try:
+            logger.info('Closing kafka connection')
+            producer.close(10)
+        except Exception as e:
+            logger.warn('Failed to close kafka connection, caused by: %s', e.message)
 
 
 def process_stream(stream, kafka_producer, target_topic):
