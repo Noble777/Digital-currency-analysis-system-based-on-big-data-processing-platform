@@ -35,6 +35,24 @@ def shutdown_hook(producer):
 
 
 def process_stream(stream, kafka_producer, target_topic):
+	def send_to_kafka(rdd):
+		results = rdd.collect()
+		for r in results:
+			data = json.dumps({
+				'Symbol': r[0],
+				'Timestamp': time.time(),
+				'Average': r[1]})
+		try:
+			logger.info("Sending average price %s to kafka", data)
+			kafka_producer.send(target_topic, value=data.encode('utf-8'))
+		except KafkaError as error:
+			logger.warn('Failed to send average price to kafka: ', error.message)
+
+	def pair(data):
+		record = json.loads(data)
+		return record.get('Symbol'), (float(record.get('LastTradePrice')), 1)
+
+	stream.map(pair).reduceByKey(lambda a, b: (a[0] + b[0], a[1] + b[1])).map(lambda kv: (kv[0], kv[1][0] / kv[1][1])).foreachRDD(send_to_kafka)
 
 
 if __name__ == '__main__':
