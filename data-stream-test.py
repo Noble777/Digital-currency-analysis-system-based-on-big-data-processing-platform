@@ -20,11 +20,28 @@ test_input = [
 
 
 def _make_dstream_helper(sc, ssc, test_input):
-
+	input_rdds = [sc.parallelize(test_input, 1)]
+	input_stream = ssc.queueStream(input_rdds)
+	return input_stream
 
 
 def test_data_stream(sc, ssc, topic):
+	input_stream = _make_dstream_helper(sc, ssc, test_input)
+	print(input_stream)
+	mock_kafka_producer = MagicMock()
 
+	data_stream_module.process_stream(input_stream, mock_kafka_producer, topic)
+
+	ssc.start()
+	sleep(5)
+	ssc.stop()
+
+	mock_kafka_producer.send.assert_called_once()
+	args, kwargs = mock_kafka_producer.send.call_args
+	print(kwargs)
+
+	assert math.isclose(json.loads(kwargs['value'])['Average'], 14000.0, rel_tol=1e-10)
+	print('test_data_stream passed!')
 
 
 if __name__ == '__main__':
